@@ -84,7 +84,7 @@ It is safe to re-run; it never overwrites an existing admin password. The seedin
 
 ### Frontend on Vercel
 1. Import the repo, **Root directory = `client`** (Vite is auto-detected).
-2. Set the Vercel environment variable `VITE_API_URL` to the backend origin, for example `https://your-api.onrender.com` (no trailing slash). The frontend calls that API directly; the Vercel rewrite serves the client-side routes.
+2. The Vercel rewrite in `client/vercel.json` forwards `/api/*` to `https://sriastro.onrender.com` and serves other paths through the React SPA. API calls remain same-origin in the browser so authentication cookies work without relying on third-party-cookie support. No Vite environment variable is needed for the API URL.
 
 Finally, set `CLIENT_URL` on the backend to the exact Vercel URL. This must match the deployed frontend origin for credentialed API requests and authentication cookies.
 

@@ -15,6 +15,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(isAdminPath);
   const checked = useRef(false);
+  const authCheckId = useRef(0);
 
   useEffect(() => {
     setUnauthorizedHandler(() => setEmail(null));
@@ -25,16 +26,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isAdminPath || checked.current) return;
     checked.current = true;
+    const checkId = ++authCheckId.current;
     setLoading(true);
-    api.get('/auth/me').then((r) => setEmail(r.data.admin?.email ?? null)).catch(() => setEmail(null)).finally(() => setLoading(false));
+    api.get('/auth/me')
+      .then((r) => { if (checkId === authCheckId.current) setEmail(r.data.admin?.email ?? null); })
+      .catch(() => { if (checkId === authCheckId.current) setEmail(null); })
+      .finally(() => { if (checkId === authCheckId.current) setLoading(false); });
   }, [isAdminPath]);
 
   const login = useCallback(async (e: string, p: string) => {
     const r = await api.post('/auth/login', { email: e, password: p });
+    authCheckId.current += 1;
     setEmail(r.data.admin.email);
+    setLoading(false);
   }, []);
   const logout = useCallback(async () => {
-    try { await api.post('/auth/logout'); } finally { setEmail(null); }
+    try { await api.post('/auth/logout'); } finally {
+      authCheckId.current += 1;
+      setEmail(null);
+      setLoading(false);
+    }
   }, []);
 
   const value = useMemo(() => ({ email, loading, login, logout }), [email, loading, login, logout]);
